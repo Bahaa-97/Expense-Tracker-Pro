@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تعقب المصاريف الاحترافي | Expense Tracker Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Inter:wght@400;700&display=swap');
+        
+        body {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .font-ar { font-family: 'Cairo', sans-serif; }
+        .font-en { font-family: 'Inter', sans-serif; }
+        
+        .dark {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        
+        .expense-item {
+            transition: all 0.2s ease;
+        }
+        .expense-item:hover {
+            transform: scale(1.01);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-ar min-h-screen">
+
+    <div class="max-w-lg mx-auto p-4 md:p-6">
+        <!-- Header & Controls -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex gap-2">
+                <button id="themeToggle" class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-200 dark:bg-gray-700 hover:opacity-80 transition">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:inline text-yellow-400"></i>
+                </button>
+                <button id="langToggle" class="px-3 h-10 rounded-xl border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition text-sm font-bold">
+                    EN
+                </button>
+            </div>
+            
+            <h1 id="appTitle" class="text-xl font-bold">تعقب المصاريف</h1>
+        </div>
+
+        <!-- Settings Section (Currency & Budget) -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm mb-6 flex flex-wrap gap-4">
+            <div class="flex-1 min-w-[140px]">
+                <label id="currencyLabel" class="block text-xs mb-1 opacity-70">العملة</label>
+                <select id="currencySelect" class="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    <option value="EGP">EGP (ج.م)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="SAR">SAR (ر.س)</option>
+                    <option value="AED">AED (د.إ)</option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[140px]">
+                <label id="budgetLabel" class="block text-xs mb-1 opacity-70">الميزانية الكلية</label>
+                <input type="number" id="budgetInput" placeholder="0.00" 
+                       class="w-full p-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition">
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-blue-600 text-white rounded-2xl p-4 shadow-lg flex flex-col items-center">
+                <p id="totalExpLabel" class="text-xs opacity-80 mb-1">إجمالي المصاريف</p>
+                <div class="flex items-baseline gap-1">
+                    <h2 id="totalAmount" class="text-2xl font-bold">0.00</h2>
+                    <span class="text-xs currency-symbol">ج.م</span>
+                </div>
+            </div>
+            <div id="balanceCard" class="bg-emerald-600 text-white rounded-2xl p-4 shadow-lg flex flex-col items-center transition-colors">
+                <p id="balanceLabel" class="text-xs opacity-80 mb-1">الرصيد المتبقي</p>
+                <div class="flex items-baseline gap-1">
+                    <h2 id="remainingAmount" class="text-2xl font-bold">0.00</h2>
+                    <span class="text-xs currency-symbol">ج.م</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Form -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm mb-6">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-2 h-6 bg-blue-500 rounded-full"></div>
+                <h3 id="formTitle" class="font-bold">إضافة مصروف</h3>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input type="text" id="descInput" placeholder="الوصف" 
+                       class="p-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                <input type="number" id="amountInput" placeholder="المبلغ" 
+                       class="p-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                <button id="addBtn" class="sm:col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md active:scale-95">
+                    إضافة للقائمة
+                </button>
+            </div>
+        </div>
+
+        <!-- List Section -->
+        <div class="flex justify-between items-center mb-4 px-1">
+            <h3 id="listTitle" class="font-bold flex items-center gap-2">
+                <i class="fas fa-history text-blue-500"></i>
+                سجل العمليات
+            </h3>
+            <button id="clearBtn" class="text-red-500 text-xs font-bold hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition">
+                <i class="fas fa-trash-sweep mr-1"></i> مسح السجل
+            </button>
+        </div>
+        
+        <div id="expenseList" class="space-y-3">
+            <!-- Items injected here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-12 text-gray-400 hidden">
+            <div class="bg-gray-100 dark:bg-gray-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-receipt text-2xl"></i>
+            </div>
+            <p id="emptyMsg">القائمة فارغة تماماً</p>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="msgBox" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-blue-600 text-white px-6 py-3 rounded-2xl text-sm shadow-2xl opacity-0 transition-all pointer-events-none translate-y-4">
+        تمت العملية
+    </div>
+
+    <script>
+        // --- DATA & STATE ---
+        let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+        let budget = parseFloat(localStorage.getItem('budget')) || 0;
+        let selectedCurrency = localStorage.getItem('currency') || 'EGP';
+        let currentLang = localStorage.getItem('lang') || 'ar';
+        let isDark = localStorage.getItem('theme') === 'dark';
+
+        const currencies = {
+            EGP: { ar: 'ج.م', en: 'EGP' },
+            USD: { ar: '$', en: '$' },
+            EUR: { ar: '€', en: '€' },
+            SAR: { ar: 'ر.س', en: 'SAR' },
+            AED: { ar: 'د.إ', en: 'AED' }
+        };
+
+        const i18n = {
+            ar: {
+                appTitle: 'تعقب المصاريف الذكي',
+                totalExpLabel: 'إجمالي المصاريف',
+                balanceLabel: 'الرصيد المتبقي',
+                currencyLabel: 'العملة المختارة',
+                budgetLabel: 'إجمالي ما تملكه (الميزانية)',
+                formTitle: 'تسجيل عملية جديدة',
+                descPlaceholder: 'فيما صرفت أموالك؟',
+                amountPlaceholder: 'المبلغ المستهلك',
+                addBtn: 'تسجيل المصروف',
+                listTitle: 'سجل العمليات',
+                clearBtn: 'تفريغ السجل',
+                emptyMsg: 'لا توجد بيانات مسجلة حالياً',
+                errorFields: 'يرجى إدخال الوصف والمبلغ بشكل صحيح',
+                msgAdded: 'تمت الإضافة للسجل',
+                msgDeleted: 'تم حذف العملية',
+                msgCleared: 'تم تصفير السجل بالكامل'
+            },
+            en: {
+                appTitle: 'Smart Expense Tracker',
+                totalExpLabel: 'Total Spent',
+                balanceLabel: 'Current Balance',
+                currencyLabel: 'Currency',
+                budgetLabel: 'Initial Balance / Budget',
+                formTitle: 'Add New Record',
+                descPlaceholder: 'What did you buy?',
+                amountPlaceholder: 'Amount',
+                addBtn: 'Add Expense',
+                listTitle: 'History',
+                clearBtn: 'Clear History',
+                emptyMsg: 'Your history is empty',
+                errorFields: 'Please enter valid description and amount',
+                msgAdded: 'Added to history',
+                msgDeleted: 'Record deleted',
+                msgCleared: 'History cleared'
+            }
+        };
+
+        // --- DOM ELEMENTS ---
+        const elements = {
+            html: document.documentElement,
+            appTitle: document.getElementById('appTitle'),
+            totalExpLabel: document.getElementById('totalExpLabel'),
+            balanceLabel: document.getElementById('balanceLabel'),
+            currencyLabel: document.getElementById('currencyLabel'),
+            budgetLabel: document.getElementById('budgetLabel'),
+            totalAmount: document.getElementById('totalAmount'),
+            remainingAmount: document.getElementById('remainingAmount'),
+            balanceCard: document.getElementById('balanceCard'),
+            formTitle: document.getElementById('formTitle'),
+            descInput: document.getElementById('descInput'),
+            amountInput: document.getElementById('amountInput'),
+            budgetInput: document.getElementById('budgetInput'),
+            currencySelect: document.getElementById('currencySelect'),
+            addBtn: document.getElementById('addBtn'),
+            listTitle: document.getElementById('listTitle'),
+            clearBtn: document.getElementById('clearBtn'),
+            expenseList: document.getElementById('expenseList'),
+            emptyState: document.getElementById('emptyState'),
+            emptyMsg: document.getElementById('emptyMsg'),
+            langToggle: document.getElementById('langToggle'),
+            themeToggle: document.getElementById('themeToggle'),
+            msgBox: document.getElementById('msgBox')
+        };
+
+        // --- CORE FUNCTIONS ---
+
+        function init() {
+            elements.budgetInput.value = budget > 0 ? budget : '';
+            elements.currencySelect.value = selectedCurrency;
+            applyTheme();
+            updateUI();
+            renderList();
+        }
+
+        function showMessage(text) {
+            elements.msgBox.textContent = text;
+            elements.msgBox.classList.remove('opacity-0', 'translate-y-4');
+            elements.msgBox.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                elements.msgBox.classList.add('opacity-0', 'translate-y-4');
+                elements.msgBox.classList.remove('opacity-100', 'translate-y-0');
+            }, 2500);
+        }
+
+        function toggleTheme() {
+            isDark = !isDark;
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            applyTheme();
+        }
+
+        function applyTheme() {
+            if (isDark) elements.html.classList.add('dark');
+            else elements.html.classList.remove('dark');
+        }
+
+        function toggleLang() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            localStorage.setItem('lang', currentLang);
+            updateUI();
+            renderList();
+        }
+
+        function updateUI() {
+            const lang = i18n[currentLang];
+            elements.html.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            elements.html.lang = currentLang;
+            document.body.className = currentLang === 'ar' ? 'bg-gray-50 text-gray-900 font-ar min-h-screen dark:bg-slate-900 dark:text-white' : 'bg-gray-50 text-gray-900 font-en min-h-screen dark:bg-slate-900 dark:text-white';
+            
+            elements.appTitle.textContent = lang.appTitle;
+            elements.totalExpLabel.textContent = lang.totalExpLabel;
+            elements.balanceLabel.textContent = lang.balanceLabel;
+            elements.currencyLabel.textContent = lang.currencyLabel;
+            elements.budgetLabel.textContent = lang.budgetLabel;
+            elements.formTitle.textContent = lang.formTitle;
+            elements.descInput.placeholder = lang.descPlaceholder;
+            elements.amountInput.placeholder = lang.amountPlaceholder;
+            elements.addBtn.textContent = lang.addBtn;
+            elements.listTitle.innerHTML = `<i class="fas fa-history text-blue-500 mr-2 ml-2"></i> ${lang.listTitle}`;
+            elements.clearBtn.innerHTML = `<i class="fas fa-trash-alt mr-1 ml-1"></i> ${lang.clearBtn}`;
+            elements.emptyMsg.textContent = lang.emptyMsg;
+            elements.langToggle.textContent = currentLang === 'ar' ? 'EN' : 'AR';
+            
+            updateCurrencySymbols();
+        }
+
+        function updateCurrencySymbols() {
+            const symbol = currencies[selectedCurrency][currentLang];
+            document.querySelectorAll('.currency-symbol').forEach(el => el.textContent = symbol);
+        }
+
+        function addExpense() {
+            const desc = elements.descInput.value.trim();
+            const amount = parseFloat(elements.amountInput.value);
+
+            if (!desc || isNaN(amount) || amount <= 0) {
+                showMessage(i18n[currentLang].errorFields);
+                return;
+            }
+
+            const newExpense = {
+                id: Date.now(),
+                desc: desc,
+                amount: amount,
+                date: new Date().toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US', { day:'numeric', month:'short' })
+            };
+
+            expenses.unshift(newExpense);
+            saveData();
+            renderList();
+            
+            elements.descInput.value = '';
+            elements.amountInput.value = '';
+            showMessage(i18n[currentLang].msgAdded);
+        }
+
+        function deleteExpense(id) {
+            expenses = expenses.filter(ex => ex.id !== id);
+            saveData();
+            renderList();
+            showMessage(i18n[currentLang].msgDeleted);
+        }
+
+        function clearAll() {
+            if (expenses.length === 0) return;
+            expenses = [];
+            saveData();
+            renderList();
+            showMessage(i18n[currentLang].msgCleared);
+        }
+
+        function saveData() {
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+            localStorage.setItem('budget', budget);
+            localStorage.setItem('currency', selectedCurrency);
+        }
+
+        function renderList() {
+            elements.expenseList.innerHTML = '';
+            let totalSpent = 0;
+
+            if (expenses.length === 0) {
+                elements.emptyState.classList.remove('hidden');
+            } else {
+                elements.emptyState.classList.add('hidden');
+                const symbol = currencies[selectedCurrency][currentLang];
+                
+                expenses.forEach(ex => {
+                    totalSpent += ex.amount;
+                    const item = document.createElement('div');
+                    item.className = 'expense-item flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700';
+                    item.innerHTML = `
+                        <div class="flex gap-3 items-center">
+                            <div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+                                <i class="fas fa-shopping-cart text-sm"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-sm text-gray-800 dark:text-gray-100">${ex.desc}</span>
+                                <span class="text-[10px] text-gray-400 uppercase font-bold">${ex.date}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="font-bold text-blue-600 dark:text-blue-400">${ex.amount.toFixed(2)} <small>${symbol}</small></span>
+                            <button onclick="deleteExpense(${ex.id})" class="text-gray-300 hover:text-red-500 transition p-2">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                    elements.expenseList.appendChild(item);
+                });
+            }
+
+            // Calculations
+            const remaining = budget - totalSpent;
+            
+            elements.totalAmount.textContent = totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            elements.remainingAmount.textContent = remaining.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            // UI Feedback for balance
+            if (budget > 0) {
+                if (remaining < 0) {
+                    elements.balanceCard.className = 'bg-red-600 text-white rounded-2xl p-4 shadow-lg flex flex-col items-center transition-colors';
+                } else if (remaining < (budget * 0.2)) {
+                    elements.balanceCard.className = 'bg-orange-500 text-white rounded-2xl p-4 shadow-lg flex flex-col items-center transition-colors';
+                } else {
+                    elements.balanceCard.className = 'bg-emerald-600 text-white rounded-2xl p-4 shadow-lg flex flex-col items-center transition-colors';
+                }
+            } else {
+                 elements.balanceCard.className = 'bg-gray-400 dark:bg-gray-600 text-white rounded-2xl p-4 shadow-lg flex flex-col items-center transition-colors';
+            }
+            
+            updateCurrencySymbols();
+        }
+
+        // --- EVENT LISTENERS ---
+        elements.addBtn.addEventListener('click', addExpense);
+        elements.langToggle.addEventListener('click', toggleLang);
+        elements.themeToggle.addEventListener('click', toggleTheme);
+        elements.clearBtn.addEventListener('click', clearAll);
+        
+        elements.budgetInput.addEventListener('input', (e) => {
+            budget = parseFloat(e.target.value) || 0;
+            saveData();
+            renderList();
+        });
+
+        elements.currencySelect.addEventListener('change', (e) => {
+            selectedCurrency = e.target.value;
+            saveData();
+            updateCurrencySymbols();
+            renderList();
+        });
+        
+        elements.amountInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addExpense();
+        });
+
+        window.onload = init;
+    </script>
+</body>
+</html>
